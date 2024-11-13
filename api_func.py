@@ -125,4 +125,68 @@ def tracks_info(sp, track_list):
 
     return audio_features_dict
 
+def artist_albums_tracks_with_features(sp, artist_id):
+    # Inicializa listas para almacenar información de los álbumes, canciones y sus características de audio
+    albums_info = []
+    tracks_info = []
+
+    # Obtiene los álbumes del artista
+    results = sp.artist_albums(artist_id, album_type='album')
+    albums = results['items']
+
+    # Itera sobre cada álbum
+    for album in albums:
+        album_info = {
+            'name': album['name'],
+            'id': album['id'],
+            'release_date': album['release_date'],
+            'album_type': album['album_type'],
+            'total_tracks': album['total_tracks']
+        }
+        albums_info.append(album_info)
+        
+        # Obtiene las canciones del álbum actual
+        album_id = album['id']
+        album_tracks = sp.album_tracks(album_id)['items']
+
+        # Lista para almacenar los detalles de las canciones del álbum
+        album_tracks_info = []
+
+        # Procesa cada canción en el álbum
+        for track in album_tracks:
+            track_info = {
+                'album_id': album_id,
+                'album_name': album['name'],
+                'track_name': track['name'],
+                'track_id': track['id'],
+                'duration_ms': track['duration_ms'],
+                'explicit': track['explicit'],
+                'track_number': track['track_number']
+            }
+
+            # Obtener características de audio de la canción (por cada canción individual)
+            audio_features = sp.audio_features(track['id'])
+            
+            # Si se obtienen características, agregarlas al diccionario de la canción
+            if audio_features and len(audio_features) > 0:
+                track_info.update({
+                    'danceability': audio_features[0]['danceability'],
+                    'energy': audio_features[0]['energy'],
+                    'key': audio_features[0]['key'],
+                    'loudness': audio_features[0]['loudness'],
+                    'mode': audio_features[0]['mode'],
+                    'speechiness': audio_features[0]['speechiness'],
+                    'acousticness': audio_features[0]['acousticness'],
+                    'instrumentalness': audio_features[0]['instrumentalness'],
+                    'liveness': audio_features[0]['liveness'],
+                    'valence': audio_features[0]['valence'],
+                    'tempo': audio_features[0]['tempo']
+                })
+
+            album_tracks_info.append(track_info)
+
+        # Agregar la lista de canciones procesadas para el álbum
+        tracks_info.append(album_tracks_info)
+
+    return {'albums': albums_info, 'tracks': tracks_info}
 
